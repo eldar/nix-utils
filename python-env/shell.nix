@@ -2,8 +2,8 @@ let
   pkgs = import <nixpkgs> {};
 
   libs = with pkgs; [
+    stdenv.cc.cc.lib # libstdc++.so.6
     zlib
-    stdenv.cc.cc.lib
     glib
     glib.out
     libglvnd
@@ -20,11 +20,10 @@ let
     python39Packages.pip
     git
   ];
-
-  shell = pkgs.mkShell {
+in
+  pkgs.mkShell {
     buildInputs = libs ++ apps;
     shellHook = ''
-      # Add the library paths for libstdc++.so.6 and libz.so.1
       export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath libs}"
       
       # Create a symlink to /lib64/libcuda.so.1 and add to LD_LIBRARY_PATH
@@ -41,6 +40,4 @@ let
           source .venv/bin/activate
       fi
     '';
-  };
-in
-  shell
+  }
