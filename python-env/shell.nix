@@ -1,6 +1,20 @@
 let
   pkgs = import <nixpkgs> {};
 
+  venvDir = ".venv";
+  pythonPackages = pkgs.python39Packages;
+
+  pyPkgs = [
+    pythonPackages.python
+    pythonPackages.pip
+  ];
+
+  apps = with pkgs; [
+    git
+  ];
+
+  # Runtime libraries used by various pip packages
+  # Add neccessary libraries to the list in case of linking errors
   libs = with pkgs; [
     stdenv.cc.cc.lib # libstdc++.so.6
     zlib
@@ -14,15 +28,9 @@ let
     xorg.libICE
     xorg.libxcb
   ];
-
-  apps = with pkgs; [
-    python39
-    python39Packages.pip
-    git
-  ];
 in
   pkgs.mkShell {
-    buildInputs = libs ++ apps;
+    buildInputs = pyPkgs ++ apps ++ libs;
     shellHook = ''
       export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath libs}"
       
@@ -36,8 +44,9 @@ in
       export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NIX_LIB_DIR"
 
       # Activate the virtual environment if exists
-      if [[ -f .venv/bin/activate ]]; then
-          source .venv/bin/activate
+      if [[ ! -d ${venvDir} ]]; then
+          ${pythonPackages.python.interpreter} -m venv ${venvDir}
       fi
+      source "${venvDir}/bin/activate"
     '';
   }
